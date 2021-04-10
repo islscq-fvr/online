@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<meta charset="utf-8" />
+	<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="./codemirror/mode/clike/clike.js"></script>
+    <script src="./codemirror/mode/clike/clike.js"></script>
+    <script src="./codemirror/mode/python/python.js"></script>
+    <script src="./codemirror/mode/xml/xml.js"></script>
+    <script src="./codemirror/mode/sql/sql.js"></script>
+    <script src="./codemirror/mode/php/php.js"></script>
+    <script src="./codemirror/mode/octave/octave.js"></script>
+    <script src="./codemirror/mode/swift/swift.js"></script>
+    <script src="./codemirror/mode/javascript/javascript.js"></script>
+    <script src="./codemirror/addon/edit/matchbrackets.js"></script>
+    <script src="./codemirror/addon/edit/closebrackets.js"></script>
+    <script src="./codemirror/addon/hint/show-hint.js"></script>
+    <script src="./codemirror/addon/hint/sql-hint.js"></script>
+    <script src="./codemirror/addon/hint/javascript-hint.js"></script>
+    <script src="./codemirror/addon/hint/anyword-hint.js"></script>
+    <script src="./codemirror/addon/hint/show-hint.css"></script>
+    <script src="./codemirror/keymap/sublime.js"></script>
+	<title>在线编辑器</title>
+	<style>
+		/**
+			 * 各种样式可以打开开发者模式进行查看
+			 */
+		.CodeMirror {
+			height: 100% !important;
+			font-size: 14px;
+			line-height: 18px;
+		}
+
+		#output {
+			width: 100%;
+			height: 100%;
+		}
+
+		#iframeResult {
+			display: block;
+			overflow: hidden;
+			border: 0 !important;
+			min-width: 100px;
+			width: 100%;
+			height: 100%;
+			background-color: #fff
+		}
+
+		.windowLabel {
+			letter-spacing: 1px;
+			text-transform: uppercase;
+			border: 1px solid rgba(255, 255, 255, 0);
+			background: rgba(243, 245, 246, .8);
+			display: inline-block;
+			position: absolute;
+			top: 7px;
+			right: 5px;
+			text-align: center;
+			font-size: 11px;
+			border-radius: 20px;
+			z-index: 30;
+			color: #7f94a1;
+			line-height: 23px;
+			padding: 0 7px;
+		}
+
+		.windowLabel .label {
+			color: #23527c;
+		}
+
+		.label {
+			display: inline;
+			padding: .2em .6em .3em;
+			font-size: 75%;
+			font-weight: 700;
+			line-height: 1;
+			color: #fff;
+			text-align: center;
+			white-space: nowrap;
+			vertical-align: baseline;
+			border-radius: .25em;
+		}
+
+		.fa {
+			display: inline-block;
+			font: normal normal normal 14px/1 FontAwesome;
+			font-size: inherit;
+			text-rendering: auto;
+			-webkit-font-smoothing: antialiased;
+			-moz-osx-font-smoothing: grayscale;
+		}
+
+		.btn {
+			display: inline-block;
+			font-weight: 400;
+			color: #4E5155;
+			text-align: center;
+			vertical-align: middle;
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+			background-color: transparent;
+			border: 1px solid transparent;
+			padding: .438rem 1.125rem;
+			font-size: .894rem;
+			line-height: 1.54;
+			border-radius: .25rem;
+			transition: all 0.2s ease-in-out;
+			cursor: pointer;
+		}
+
+		.btn-primary {
+			background: #26b4ff;
+		}
+
+		.btn-primary:hover {
+			background: #24abf2;
+		}
+
+		.btn-primary,
+		.btn-primary:hover {
+			border-color: transparent;
+			color: #fff;
+		}
+
+		.btn-sm {
+			padding: .188rem .6875rem;
+			font-size: .75rem;
+			line-height: 1.5;
+			border-radius: .25rem;
+		}
+
+		.tool-group {
+			margin: 10px;
+			display: flex;
+			align-items: center;
+			height: 33px;
+		}
+
+		.error-tip {
+			display: inline-block;
+			color: #a94442;
+			background-color: #f2dede;
+			padding: 6px;
+			border: 1px solid #ebccd1;
+			border-radius: 4px;
+		}
+
+		/*
+			 * 文本框中placeholder的样式
+			 */
+		#splitContainer .cm-s-dracula.CodeMirror {
+			color: rgba(248, 248, 242, 0.3) !important;
+		}
+
+		#select {
+			height: 26px;
+			outline: none;
+			border-radius: 3px;
+			padding-left: 15px;
+			margin-left: 5px;
+		}
+
+		#selectLanguage {
+			height: 26px;
+			outline: none;
+			border-radius: 3px;
+			padding-left: 15px;
+			margin-left: 5px;
+		}
+
+		.file-btn {
+			line-height: 22px;
+			width: 270px;
+			border: 1px solid #409EFF;
+			margin-left: 20px;
+		}
+
+		.inputfile {
+			width: 0.1px;
+			height: 0.1px;
+			opacity: 0;
+			overflow: hidden;
+			position: absolute;
+			z-index: -1;
+		}
+
+		.inputfile+label {
+			font-size: 14px;
+			color: #409eff;
+			background-color: #ecf5ff;
+			border: 1px solid #b3d8ff;
+			display: inline-block;
+			cursor: pointer;
+			/* 小手光标*/
+			padding: 0 10px;
+		}
+
+		.inputfile:focus+label,
+		.inputfile+label:hover {
+			background: #409eff;
+			border-color: #409eff;
+			color: #fff;
+		}
+
+		.inputfile:focus+label {
+			outline: 1px dotted #000;
+			outline: -webkit-focus-ring-color auto 5px;
+		}
+	</style>
+	<!-- code mirror的样式 -->
+	<link rel="stylesheet" href="css/codemirror.css" />
+	<!--<link rel="stylesheet" href="css/dialog.css" />-->
+	<!-- 主题的样式 -->
+	<link rel="stylesheet" href="theme/3024-day.css">
+	<link rel="stylesheet" href="theme/3024-night.css">
+	<link rel="stylesheet" href="theme/abcdef.css">
+	<link rel="stylesheet" href="theme/ambiance.css">
+	<link rel="stylesheet" href="theme/base16-dark.css">
+	<link rel="stylesheet" href="theme/bespin.css">
+	<link rel="stylesheet" href="theme/base16-light.css">
+	<link rel="stylesheet" href="theme/blackboard.css">
+	<link rel="stylesheet" href="theme/cobalt.css">
+	<link rel="stylesheet" href="theme/colorforth.css">
+	<link rel="stylesheet" href="theme/dracula.css">
+	<link rel="stylesheet" href="theme/duotone-dark.css">
+	<link rel="stylesheet" href="theme/duotone-light.css">
+	<link rel="stylesheet" href="theme/eclipse.css">
+	<link rel="stylesheet" href="theme/elegant.css">
+	<link rel="stylesheet" href="theme/erlang-dark.css">
+	<link rel="stylesheet" href="theme/gruvbox-dark.css">
+	<link rel="stylesheet" href="theme/hopscotch.css">
+	<link rel="stylesheet" href="theme/icecoder.css">
+	<link rel="stylesheet" href="theme/isotope.css">
+	<link rel="stylesheet" href="theme/lesser-dark.css">
+	<link rel="stylesheet" href="theme/liquibyte.css">
+	<link rel="stylesheet" href="theme/lucario.css">
+	<link rel="stylesheet" href="theme/material.css">
+	<link rel="stylesheet" href="theme/mbo.css">
+	<link rel="stylesheet" href="theme/mdn-like.css">
+	<link rel="stylesheet" href="theme/midnight.css">
+	<link rel="stylesheet" href="theme/monokai.css">
+	<link rel="stylesheet" href="theme/neat.css">
+	<link rel="stylesheet" href="theme/neo.css">
+	<link rel="stylesheet" href="theme/night.css">
+	<link rel="stylesheet" href="theme/nord.css">
+	<link rel="stylesheet" href="theme/oceanic-next.css">
+	<link rel="stylesheet" href="theme/panda-syntax.css">
+	<link rel="stylesheet" href="theme/paraiso-dark.css">
+	<link rel="stylesheet" href="theme/paraiso-light.css">
+	<link rel="stylesheet" href="theme/pastel-on-dark.css">
+	<link rel="stylesheet" href="theme/railscasts.css">
+	<link rel="stylesheet" href="theme/rubyblue.css">
+	<link rel="stylesheet" href="theme/seti.css">
+	<link rel="stylesheet" href="theme/shadowfox.css">
+	<link rel="stylesheet" href="theme/solarized.css">
+	<link rel="stylesheet" href="theme/the-matrix.css">
+	<link rel="stylesheet" href="theme/tomorrow-night-bright.css">
+	<link rel="stylesheet" href="theme/tomorrow-night-eighties.css">
+	<link rel="stylesheet" href="theme/ttcn.css">
+	<link rel="stylesheet" href="theme/twilight.css">
+	<link rel="stylesheet" href="theme/vibrant-ink.css">
+	<link rel="stylesheet" href="theme/xq-dark.css">
+	<link rel="stylesheet" href="theme/xq-light.css">
+	<link rel="stylesheet" href="theme/yeti.css">
+	<link rel="stylesheet" href="theme/idea.css">
+	<link rel="stylesheet" href="theme/darcula.css">
+	<link rel="stylesheet" href="theme/yonce.css">
+	<link rel="stylesheet" href="theme/zenburn.css">
+
+	<!-- 代码折叠时的样式 -->
+	<link rel="stylesheet" href="css/foldgutter.css" />
+	<!-- 全屏时的样式 -->
+	<link rel="stylesheet" href="css/fullscreen.css" />
+	<!-- 唤出来的提示代码的样式 -->
+	<link rel="stylesheet" href="css/show-hint.css" />
+
+	<link rel="stylesheet" href="css/jqx.base.css" />
+
+	<script src="js/jquery-3.4.1.min.js"></script>
+	<!-- code mirror核心代码 -->
+	<script src="js/codemirror.js"></script>
+	<!-- javascript代码高亮样式 -->
+	<script src="js/javascript.js"></script>
+	<!-- 可以设置代码提示 -->
+	<script src="js/anyword-hint.js"></script>
+	<script src="js/show-hint.js"></script>
+
+	<script src="js/dialog.js"></script>
+	<!-- 代码折叠 -->
+	<script src="js/brace-fold.js"></script>
+	<script src="js/foldcode.js"></script>
+	<script src="js/foldgutter.js"></script>
+	<!--<script src="js/comment-fold.js"></script>-->
+
+	<!-- 全屏显示，好像没什么用 -->
+	<script src="js/fullscreen.js"></script>
+
+	<!-- 搜索完成后光标会消失 -->
+	<script src="js/searchcursor.js"></script>
+	<!-- 给编辑器添加搜索功能 -->
+	<script src="js/search.js"></script>
+	<!-- 使用后编写css会有各种高亮颜色提示 -->
+	<script src="js/css.js"></script>
+	<!-- html中混合使用css和js时也会有样式适配  -->
+	<script src="js/htmlmixed.js"></script>
+	<!-- 允许textarea中使用placeholder -->
+	<script src="js/placeholder.js"></script>
+	<!-- 使用后html代码会有各种颜色提示 -->
+	<script src="js/xml.js"></script>
+	<!-- 自动闭合标签 -->
+	<script src="js/closetag.js"></script>
+	<!-- 自动闭合括号 -->
+	<script src="js/closebrackets.js"></script>
+	<!-- 光标放在括号右边时，自动高亮对应的括号 -->
+	<script src="js/matchbrackets.js"></script>
+	<!-- 鼠标点击时，自动匹配成对的标签，需要先引入xml-fold.js，要不然会报错，引入xml-fold可以折叠html代码 -->
+	<script src="js/xml-fold.js"></script>
+	<script src="js/matchtags.js"></script>
+
+	<!-- 高亮光标所在的行 -->
+	<script src="js/active-line.js"></script>
+
+	<!-- 用于分割页面 -->
+	<script src="js/jqxcore.js"></script>
+	<script src="js/jqxsplitter.js"></script>
+</head>
+
+<body>
+	<div class="tool-group">
+		<span style="margin-right: 15px;">在线编译工具</span>
+		<button id="compline" class="btn btn-primary btn-sm" style="margin-right: 15px;">执行代码</button>
+		<input type="checkbox" value="" id="isautorun" />自动执行
+		<span style="margin-left: 20px;">切换主题</span>
+		<select id="select" onchange="selectTheme(event)">
+			<option>default</option>
+			<option>3024-day</option>
+			<option>3024-night</option>
+			<option>abcdef</option>
+			<option>ambiance</option>
+			<option>base16-dark</option>
+			<option>base16-light</option>
+			<option>bespin</option>
+			<option>blackboard</option>
+			<option>cobalt</option>
+			<option>colorforth</option>
+			<option>darcula</option>
+			<option selected>dracula</option>
+			<option>duotone-dark</option>
+			<option>duotone-light</option>
+			<option>eclipse</option>
+			<option>elegant</option>
+			<option>erlang-dark</option>
+			<option>gruvbox-dark</option>
+			<option>hopscotch</option>
+			<option>icecoder</option>
+			<option>idea</option>
+			<option>isotope</option>
+			<option>lesser-dark</option>
+			<option>liquibyte</option>
+			<option>lucario</option>
+			<option>material</option>
+			<option>mbo</option>
+			<option>mdn-like</option>
+			<option>midnight</option>
+			<option>monokai</option>
+			<option>neat</option>
+			<option>neo</option>
+			<option>night</option>
+			<option>nord</option>
+			<option>oceanic-next</option>
+			<option>panda-syntax</option>
+			<option>paraiso-dark</option>
+			<option>paraiso-light</option>
+			<option>pastel-on-dark</option>
+			<option>railscasts</option>
+			<option>rubyblue</option>
+			<option>seti</option>
+			<option>shadowfox</option>
+			<option>solarized dark</option>
+			<option>solarized light</option>
+			<option>the-matrix</option>
+			<option>tomorrow-night-bright</option>
+			<option>tomorrow-night-eighties</option>
+			<option>ttcn</option>
+			<option>twilight</option>
+			<option>vibrant-ink</option>
+			<option>xq-dark</option>
+			<option>xq-light</option>
+			<option>yeti</option>
+			<option>yonce</option>
+			<option>zenburn</option>
+		</select> <span style="margin-left: 20px;">选择语言</span>
+		<select id="selectLanguage" onchange="selectLanguage()">
+			<option>C</option>
+			<option>C++</option>
+			<option>python</option>
+			<option>Java</option>
+		</select>
+		<div class="error-tip" style="display: none;margin-left: 20px;"><span></span></div>
+	</div>
+	<div id="splitContainer">
+		<div>
+			<div id="leftSplitter">
+				<div>
+					<textarea placeholder="输入代码……" id="code-html" class="form-control" name="code" rows="11"></textarea>
+					<a href="javascript:void(0);" class="windowLabel" data-panel="js">
+						<span class="label">
+							编译区
+						</span>
+						<i class="fa fa-cog">
+						</i>
+					</a>
+				</div>
+				<div>
+					<textarea placeholder="输出" id="code-js" class="form-control" name="code" rows="10"></textarea>
+					<a href="javascript:void(0);" class="windowLabel" data-panel="js">
+						<span class="label">
+							输出
+						</span>
+						<i class="fa fa-cog">
+						</i>
+					</a>
+				</div>
+			</div>
+		</div>
+		<div>
+			<div id="rightSplitter">
+				<div>
+					<textarea placeholder="在此处输入" id="code-css" class="form-control" rows="11"></textarea>
+					<a href="javascript:void(0);" class="windowLabel" data-panel="js">
+						<span class="label">
+							输入
+						</span>
+						<i class="fa fa-cog">
+						</i>
+					</a>
+				</div>
+				<div id="output" style="font-size: large;">
+					小组成员：杨梦瑶 付艳婷 王非 靳睿祺 苏文泰 陈轩达
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(() => {
+			let winHeight = 0;
+			if (window.innerHeight) {
+				winHeight = window.innerHeight
+			} else if ((document.body) && document.body.clientHeight) {
+				winHeight = document.body.clientHeight;
+			}
+			if (document.documentElement && document.documentElement.clientHeight) {
+				winHeight = document.documentElement.clientHeight;
+			}
+			$('#isautorun').prop('checked', true);	// 是否在写代码时自动运行代码
+			let height = (winHeight - 60) * 0.86;
+			// 分割html、css、js代码区
+			$('#splitContainer').jqxSplitter({ height: height, width: '100%', orientation: 'vertical', panels: [{ size: '50%' }, { size: '50%' }] });
+			$('#leftSplitter').jqxSplitter({ height: '100%', width: '100%', orientation: 'horizontal', panels: [{ size: '50%' }, { size: '50%' }] });
+			$('#rightSplitter').jqxSplitter({ height: '100%', width: '100%', orientation: 'horizontal', panels: [{ size: '50%' }, { size: '50%' }] });
+		});
+		// 使用code mirror生成编辑器时配置
+		let cm_opt = {
+			mode: 'text/html',	// 模式，表示对那种类型的代码进行样式渲染
+			gutter: false,
+			lineNumbers: true,	// 行号
+			autoCloseBrackets: true,	// 是否自动闭合括号
+			styleActiveLine: true,	// 高亮当前行
+			theme: "dracula",	// 编辑器主题
+			lineWrapping: true,	// 是否换行
+			foldGutter: true,		// 是否能折叠代码
+			gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+			extraKeys: { "Alt-/": "autocomplete" },	// 使用alt+/唤出代码提示
+			matchBrackets: true,	// 是否能匹配成对的括号
+			matchTags: { bothTags: true },	// 鼠标点击时匹配成对的标签
+			autoCloseTags: true	// 是否自动闭合标签
+		}
+
+
+		let complier_editor = CodeMirror.fromTextArea(document.getElementById("code-html"), cm_opt);
+
+		// 文本换行时顶部对齐
+		//			let charWidth = complier_editor.defaultCharWidth(), basePadding = 4;
+		//			complier_editor.on("renderLine", function(cm, line, elt) {
+		//      var off = CodeMirror.countColumn(line.text, null, cm.getOption("tabSize")) * charWidth;
+		//      elt.style.textIndent = "-" + off + "px";
+		//      elt.style.paddingLeft = (basePadding + off) + "px";
+		//    });
+		//    complier_editor.refresh();
+
+		Object.assign(cm_opt, { mode: 'text/css' });
+		let stdin_editor = CodeMirror.fromTextArea(document.getElementById("code-css"), cm_opt);
+
+		Object.assign(cm_opt, { mode: 'text/javascript' });
+		let stdout_editor = CodeMirror.fromTextArea(document.getElementById("code-js"), cm_opt);
+
+		window.addEventListener("resize", autodivheight);
+		function autodivheight() {
+			var winHeight = 0;
+			if (window.innerHeight) {
+				winHeight = window.innerHeight;
+			} else if ((document.body) && (document.body.clientHeight)) {
+				winHeight = document.body.clientHeight;
+			}
+			//通过深入Document内部对body进行检测，获取浏览器窗口高度
+			if (document.documentElement && document.documentElement.clientHeight) {
+				winHeight = document.documentElement.clientHeight;
+			}
+			height = height = (winHeight - 60) * 0.86;
+			document.getElementById("splitContainer").style.height = height + "px";
+		}
+
+		// 切换主题
+		function selectTheme(e) {
+			complier_editor.setOption('theme', e.target.value);
+			stdin_editor.setOption('theme', e.target.value);
+			stdout_editor.setOption('theme', e.target.value);
+		}
+
+		function selectLanguage() {
+
+			var objs = document.getElementById("selectLanguage");
+			var valuee;
+			//var typee = objs.selectedIndex;
+			if (objs.selectedIndex === 0) {
+				complier_editor.setOption("mode", "text/x-csrc");
+				valuee = `#include<stdio.h>
+int main(){
+	int a,b;
+	scanf("%d %d",&a,&b);
+	printf("%d",a+b);
+	return 0;
+}`;
+
+			}
+			else if (objs.selectedIndex === 1) {
+				complier_editor.setOption("mode", "text/x-c++src");
+				valuee = `#include<iostream>
+using namespace std;
+int main(){
+	int a,b;
+	cin>>a>>b;
+	cout<<a+b<<endl;
+	return 0;
+}
+		`;
+
+			}
+			else if (objs.selectedIndex === 2) {
+				complier_editor.setOption("mode", "python");
+				valuee = `x=10;
+y=25;
+z=x+y;
+print ("sum of x+y =", z);
+		`;}
+			else if (objs.selectedIndex === 3) {
+				complier_editor.setOption("mode", "text/x-java");
+				valuee = `public class MyClass{
+	public static void main(String [] args){
+		System.out.println("Java Hello World!");
+	}
+}`;
+			}
+			console.log(valuee);
+
+			complier_editor.setValue(valuee);
+		}
+
+
+		document.getElementById("compline").addEventListener('click',async() => {
+			//var result=document.getElementById('outputtext');
+			var yourscript=complier_editor.getValue();
+			console.log(yourscript);
+			var languageselect=document.getElementById('selectLanguage');
+			var language=languageselect.options[languageselect.selectedIndex].text;
+			var stdin=stdin_editor.getValue();
+			console.log(stdin);
+			switch(language){
+				case "C++":
+					language="cpp";
+					break;
+				case "C":
+					language="c";
+					break;
+				case "Java":
+					language="java";
+					break;
+				case "Python":
+					language="python3";
+					break;
+			}
+			console.log(language);
+			stdout_editor.setValue('正在编译...');
+			$.ajax({
+				url: 'http://hiyiguo.cn:8081/https://api.jdoodle.com/v1/execute',
+				data: JSON.stringify({
+					"clientId":"a40544af238dde184bba9d3923bef8a7",
+					"clientSecret":"4d6699832c09c1b57108a729414cdea450ebc50f8dd60ea0b2e5f563ce4e22ac",
+					"script":yourscript,
+					"stdin":stdin,
+					"language":language,
+					"versionIndex":"0"
+				}),
+				type: 'post',
+				dataType:'json',
+				contentType:'application/json;charset=UTF-8',
+				success:function(data){
+					//result.innerHTML=data.output;
+					stdout_editor.setValue(data.output);
+					console.log(data);
+				}
+			})
+		});
+
+	</script>
+</body>
+
+</html>
